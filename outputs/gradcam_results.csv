@@ -1,0 +1,10 @@
+image,disease,iou,method
+00000808_002.png,Atelectasis,0.24414770853939993,gradcam
+00000865_006.png,Atelectasis,0.0,gradcam
+00000181_061.png,Atelectasis,0.0,gradcam
+00000468_033.png,Atelectasis,0.0392502756339581,gradcam
+00001170_046.png,Atelectasis,0.0,gradcam
+00000149_006.png,Atelectasis,0.0,gradcam
+00000211_010.png,Atelectasis,0.0,gradcam
+00000468_017.png,Atelectasis,0.0,gradcam
+00000744_006.png,Atelectasis,0.0370201096892139,gradcam
