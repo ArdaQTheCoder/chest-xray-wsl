@@ -260,8 +260,9 @@ def visualize_cam(
         axes[3].set_title('Top-8 Predictions', fontsize=12)
         axes[3].invert_yaxis()
 
+    filename = Path(img_path).name
     plt.suptitle(
-        f'Chest X-ray Analysis  |  {method.upper()}  |  {class_name}',
+        f'{filename}  |  {method.upper()}  |  Predicted: {class_name}',
         fontsize=13, fontweight='bold',
     )
     plt.tight_layout()

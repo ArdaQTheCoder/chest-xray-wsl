@@ -23,7 +23,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 from sklearn.metrics import roc_auc_score, roc_curve
 
-from src.dataset import LABELS, NUM_CLASSES, ChestXrayDataset
+from src.dataset import LABELS, ChestXrayDataset
 from src.cam import preprocess_image, generate_cam
 
 
@@ -127,7 +127,7 @@ def evaluate_classification(
         f"{'Sensitivity':>12}  {'Specificity':>12}  {'Threshold':>10}"
     )
     print(header)
-    print("─" * 90)
+    print("-" * 90)
 
     results = {}
     rows    = []
@@ -151,7 +151,7 @@ def evaluate_classification(
         specificity   = float(1.0 - fpr[j_idx])
 
         print(
-            f"{label:<25} {auroc:>6.4f}  [{ci_low:.4f}–{ci_hi:.4f}]  "
+            f"{label:<25} {auroc:>6.4f}  [{ci_low:.4f}-{ci_hi:.4f}]  "
             f"{sensitivity:>12.4f}  {specificity:>12.4f}  {opt_threshold:>10.4f}"
         )
 
@@ -284,7 +284,7 @@ def evaluate_localization(
     model.eval()
     results  = []
 
-    for idx, row in bbox_df.iterrows():
+    for _, row in bbox_df.iterrows():
         if len(results) >= max_samples:
             break
 
@@ -325,12 +325,12 @@ def evaluate_localization(
 
         print(
             f"[{len(results):3d}] {row['Image Index']:25s} | "
-            f"{disease:20s} | IoU: {iou:.4f} | PG: {'✓' if pg_hit else '✗'}"
+            f"{disease:20s} | IoU: {iou:.4f} | PG: {'HIT' if pg_hit else 'miss'}"
         )
 
     results_df = pd.DataFrame(results)
 
-    print(f"\n{'─'*60}")
+    print("\n" + "-" * 60)
     print(f"Method: {method.upper()}")
     print(f"Samples evaluated : {len(results_df)}")
     print(f"Mean IoU          : {results_df['iou'].mean():.4f}")

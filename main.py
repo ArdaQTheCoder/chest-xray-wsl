@@ -216,9 +216,9 @@ def run_threshold_search(args, device: torch.device) -> None:
     best_thresh  = 0.5
     best_iou     = 0.0
 
-    print(f"{'─'*40}")
+    print("-" * 40)
     print("CAM Threshold Search  (GradCAM)")
-    print(f"{'─'*40}")
+    print("-" * 40)
 
     for t in thresholds:
         results  = evaluate_localization(
