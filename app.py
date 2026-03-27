@@ -1,5 +1,5 @@
 """
-Chest X-ray Analysis — Interactive Streamlit Web Demo.
+Chest X-ray Analysis -- Interactive Streamlit Web Demo.
 
 Run:
     streamlit run app.py
@@ -26,7 +26,7 @@ import streamlit as st
 import torch
 from PIL import Image
 
-# ─── Page Config ──────────────────────────────────────────────────────────────
+# --- Page Config --------------------------------------------------------------
 
 st.set_page_config(
     page_title="Chest X-ray AI Analysis",
@@ -42,7 +42,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ─── Sidebar ──────────────────────────────────────────────────────────────────
+# --- Sidebar ------------------------------------------------------------------
 
 with st.sidebar:
     st.title("⚙️ Settings")
@@ -59,9 +59,9 @@ with st.sidebar:
         ["gradcam", "gradcam++", "eigencam", "ig"],
         index=0,
         help=(
-            "gradcam / gradcam++ — gradient-weighted activation maps.\n"
-            "eigencam — gradient-free PCA-based map.\n"
-            "ig — Integrated Gradients (slower but attribution-theoretically sound)."
+            "gradcam / gradcam++ -- gradient-weighted activation maps.\n"
+            "eigencam -- gradient-free PCA-based map.\n"
+            "ig -- Integrated Gradients (slower but attribution-theoretically sound)."
         ),
     )
 
@@ -80,14 +80,14 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("**About this demo**")
     st.markdown(
-        "Graduation project — multi-label chest X-ray classification "
+        "Graduation project -- multi-label chest X-ray classification "
         "with explainable AI and uncertainty quantification."
     )
 
 
-# ─── Model Loading ────────────────────────────────────────────────────────────
+# --- Model Loading ------------------------------------------------------------
 
-@st.cache_resource(show_spinner="Loading model …")
+@st.cache_resource(show_spinner="Loading model ...")
 def load_cached_model(arch: str, ckpt: str):
     """Load model once; cache across reruns (keyed on arch + ckpt path)."""
     from src.model import get_model
@@ -100,7 +100,7 @@ def load_cached_model(arch: str, ckpt: str):
         model = _load_model(ckpt, model, device)
         status = f"✅ Loaded: `{ckpt}`"
     else:
-        status = f"⚠️ Checkpoint not found — using random weights ({ckpt})"
+        status = f"⚠️ Checkpoint not found -- using random weights ({ckpt})"
 
     return model, device, status
 
@@ -115,7 +115,7 @@ with st.sidebar:
         st.warning("Running on CPU (inference will be slower)")
 
 
-# ─── Main ─────────────────────────────────────────────────────────────────────
+# --- Main ---------------------------------------------------------------------
 
 st.title("🫁 Chest X-ray Disease Analysis")
 st.markdown(
@@ -144,7 +144,7 @@ if uploaded is None:
     """)
     st.stop()
 
-# ─── Process Uploaded Image ───────────────────────────────────────────────────
+# --- Process Uploaded Image ---------------------------------------------------
 
 # Write to a temp file so OpenCV and preprocess_image can read it
 with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
@@ -158,15 +158,15 @@ try:
 
     image_tensor, pil_image = preprocess_image(tmp_path)
 
-    # ── Standard prediction ────────────────────────────────────────────────────
+    # -- Standard prediction ----------------------------------------------------
     model.eval()
     with torch.no_grad():
         logits, _ = model(image_tensor.to(device))
         probs_det = torch.sigmoid(logits)[0].cpu().numpy()   # deterministic
 
-    # ── MC Dropout uncertainty ─────────────────────────────────────────────────
+    # -- MC Dropout uncertainty -------------------------------------------------
     if show_uncertainty:
-        with st.spinner(f"Running {n_mc_samples} MC Dropout passes …"):
+        with st.spinner(f"Running {n_mc_samples} MC Dropout passes ..."):
             mean_probs_t, std_probs_t = mc_dropout_predict(
                 model, image_tensor, device, n_samples=n_mc_samples
             )
@@ -180,11 +180,11 @@ try:
     top_class_idx  = int(sorted_idx[0])
     top_class_name = LABELS[top_class_idx]
 
-    # ── CAM ────────────────────────────────────────────────────────────────────
+    # -- CAM --------------------------------------------------------------------
     cam_spinner_msg = (
-        "Computing Integrated Gradients (this takes ~10–20 s) …"
+        "Computing Integrated Gradients (this takes ~10-20 s) ..."
         if cam_method == "ig"
-        else f"Generating {cam_method.upper()} map …"
+        else f"Generating {cam_method.upper()} map ..."
     )
     with st.spinner(cam_spinner_msg):
         cam_map = generate_cam(
@@ -196,9 +196,9 @@ try:
     heatmap_c  = cm.jet(cam_map)[:, :, :3]
     overlay    = (0.55 * orig_arr + 0.45 * heatmap_c).clip(0, 1)
 
-    # ─────────────────────────────────────────────────────────────────────────
+    # -------------------------------------------------------------------------
     # Layout: Original | CAM panels | Predictions
-    # ─────────────────────────────────────────────────────────────────────────
+    # -------------------------------------------------------------------------
 
     col_img, col_cam, col_pred = st.columns([1, 2, 1.5])
 
@@ -207,7 +207,7 @@ try:
         st.image(pil_image, use_column_width=True)
 
     with col_cam:
-        st.subheader(f"{cam_method.upper()} — {top_class_name}")
+        st.subheader(f"{cam_method.upper()} -- {top_class_name}")
         fig, axes = plt.subplots(1, 2, figsize=(10, 4.5))
 
         axes[0].imshow(cam_map, cmap="jet")
@@ -221,7 +221,7 @@ try:
         axes[1].axis("off")
 
         plt.suptitle(
-            f"{cam_method.upper()} — {top_class_name}",
+            f"{cam_method.upper()} -- {top_class_name}",
             fontsize=12, fontweight="bold",
         )
         plt.tight_layout()
@@ -253,7 +253,7 @@ try:
         st.pyplot(fig)
         plt.close()
 
-    # ─── Uncertainty report ───────────────────────────────────────────────────
+    # --- Uncertainty report ---------------------------------------------------
 
     if show_uncertainty:
         with st.expander("MC Dropout Uncertainty Report", expanded=False):
@@ -275,13 +275,13 @@ try:
             ax.set_yticklabels([LABELS[i] for i in all_idx], fontsize=9)
             ax.set_xlim(0, 1.05)
             ax.axvline(threshold, color="red", linestyle="--", alpha=0.7)
-            ax.set_title("All Classes — MC Dropout Predictions (error bars = ±1 std)")
+            ax.set_title("All Classes -- MC Dropout Predictions (error bars = +-1 std)")
             ax.invert_yaxis()
             plt.tight_layout()
             st.pyplot(fig)
             plt.close()
 
-    # ─── Full prediction table ────────────────────────────────────────────────
+    # --- Full prediction table ------------------------------------------------
 
     st.subheader("Full Prediction Table")
     rows = []
@@ -289,14 +289,14 @@ try:
         rows.append({
             "Disease":      label,
             "Probability":  round(float(mean_probs[i]), 4),
-            "Uncertainty":  round(float(std_probs[i]), 4) if show_uncertainty else "—",
+            "Uncertainty":  round(float(std_probs[i]), 4) if show_uncertainty else "--",
             "Status":       "🔴 POSITIVE" if mean_probs[i] >= threshold else "🟢 negative",
         })
 
     df = pd.DataFrame(rows).sort_values("Probability", ascending=False).reset_index(drop=True)
     st.dataframe(df, use_container_width=True)
 
-    # ─── Download results ─────────────────────────────────────────────────────
+    # --- Download results -----------------------------------------------------
     csv_bytes = df.to_csv(index=False).encode()
     st.download_button(
         "⬇️ Download predictions as CSV",

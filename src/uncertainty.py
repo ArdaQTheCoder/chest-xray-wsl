@@ -1,7 +1,7 @@
 """
 Monte Carlo (MC) Dropout Uncertainty Estimation.
 
-Standard neural networks are overconfident — they produce a single point
+Standard neural networks are overconfident -- they produce a single point
 estimate without quantifying how certain that estimate is.  MC Dropout
 (Gal & Ghahramani, 2016) approximates Bayesian inference by running N
 stochastic forward passes with dropout active during inference.
@@ -24,7 +24,7 @@ from typing import Tuple
 from src.dataset import LABELS, NUM_CLASSES
 
 
-# ─── Inference ────────────────────────────────────────────────────────────────
+# --- Inference ----------------------------------------------------------------
 
 def mc_dropout_predict(
     model,
@@ -46,8 +46,8 @@ def mc_dropout_predict(
         n_samples:    Number of stochastic forward passes (≥ 30 recommended).
 
     Returns:
-        mean_probs: Tensor (1, NUM_CLASSES) — mean predicted probability.
-        std_probs:  Tensor (1, NUM_CLASSES) — std dev (uncertainty proxy).
+        mean_probs: Tensor (1, NUM_CLASSES) -- mean predicted probability.
+        std_probs:  Tensor (1, NUM_CLASSES) -- std dev (uncertainty proxy).
     """
     model.eval()
     model.enable_mc_dropout()
@@ -69,7 +69,7 @@ def mc_dropout_predict(
     return mean_probs, std_probs
 
 
-# ─── Reporting ────────────────────────────────────────────────────────────────
+# --- Reporting ----------------------------------------------------------------
 
 def uncertainty_report(
     mean_probs: torch.Tensor,
@@ -80,9 +80,9 @@ def uncertainty_report(
     Format MC Dropout predictions as a human-readable report.
 
     Confidence tiers:
-      HIGH  — std < 0.05  (model is certain)
-      MED   — std < 0.15  (moderate uncertainty)
-      LOW   — std ≥ 0.15  (high uncertainty, flag for review)
+      HIGH  -- std < 0.05  (model is certain)
+      MED   -- std < 0.15  (moderate uncertainty)
+      LOW   -- std ≥ 0.15  (high uncertainty, flag for review)
 
     Args:
         mean_probs: (1, 14) mean predicted probabilities.
@@ -112,7 +112,7 @@ def uncertainty_report(
     return "\n".join(lines)
 
 
-# ─── Visualisation ────────────────────────────────────────────────────────────
+# --- Visualisation ------------------------------------------------------------
 
 def visualize_uncertainty(
     mean_probs: torch.Tensor,
@@ -125,7 +125,7 @@ def visualize_uncertainty(
     Bar chart of MC Dropout predictions with uncertainty error bars.
 
     Positive predictions (prob ≥ threshold) are shown in red,
-    negative in steelblue.  Error bars show ±1 std.
+    negative in steelblue.  Error bars show +-1 std.
 
     Args:
         mean_probs: (1, 14) mean predicted probabilities.
@@ -155,7 +155,7 @@ def visualize_uncertainty(
     ax.set_xlabel('Predicted Probability', fontsize=11)
     ax.set_title(
         'MC Dropout Predictions with Uncertainty\n'
-        '(red = positive, blue = negative, bars = ±1 std)',
+        '(red = positive, blue = negative, bars = +-1 std)',
         fontsize=12,
     )
     ax.invert_yaxis()

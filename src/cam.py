@@ -9,8 +9,8 @@ Supported methods:
                      Implemented without external dependencies.
 
 Architecture-aware target layers:
-  - DenseNet121+CBAM  → model.cbam  (attended 1024-channel feature map)
-  - EfficientNet-B4   → model.features[-1]  (1792-channel feature map)
+  - DenseNet121+CBAM  -> model.cbam  (attended 1024-channel feature map)
+  - EfficientNet-B4   -> model.features[-1]  (1792-channel feature map)
 """
 
 import numpy as np
@@ -27,7 +27,7 @@ from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from src.dataset import LABELS
 
 
-# ─── Model Loading ────────────────────────────────────────────────────────────
+# --- Model Loading ------------------------------------------------------------
 
 def load_model(checkpoint_path: str, model, device):
     """
@@ -47,14 +47,14 @@ def load_model(checkpoint_path: str, model, device):
     return model
 
 
-# ─── Image Preprocessing ──────────────────────────────────────────────────────
+# --- Image Preprocessing ------------------------------------------------------
 
 def preprocess_image(img_path: str):
     """
     Load and preprocess a single image for model inference.
 
     Applies the same val/test transforms as get_transforms() (no augmentation):
-    Resize(256) → CenterCrop(224) → ToTensor → ImageNet-Normalize.
+    Resize(256) -> CenterCrop(224) -> ToTensor -> ImageNet-Normalize.
 
     Note: CLAHE is intentionally omitted here so that the original pixel
     values remain available for visualisation overlays.
@@ -63,7 +63,7 @@ def preprocess_image(img_path: str):
         img_path: Path to image file.
 
     Returns:
-        (tensor, pil_image) — tensor shape (1, 3, 224, 224), original PIL image.
+        (tensor, pil_image) -- tensor shape (1, 3, 224, 224), original PIL image.
     """
     transform = transforms.Compose([
         transforms.Resize(256),
@@ -77,15 +77,15 @@ def preprocess_image(img_path: str):
     return tensor, image
 
 
-# ─── Target Layer Selection ───────────────────────────────────────────────────
+# --- Target Layer Selection ---------------------------------------------------
 
 def get_target_layer(model, arch: str = 'densenet121') -> list:
     """
     Return the appropriate CAM target layer for the given architecture.
 
     The target layer is the last spatial feature map before global pooling:
-      - DenseNetCBAM:   model.cbam  — post-attention 1024-ch map (7×7)
-      - EfficientNetB4: model.features[-1]  — 1792-ch map (7×7)
+      - DenseNetCBAM:   model.cbam  -- post-attention 1024-ch map (7x7)
+      - EfficientNetB4: model.features[-1]  -- 1792-ch map (7x7)
 
     Args:
         model: Instantiated model.
@@ -102,7 +102,7 @@ def get_target_layer(model, arch: str = 'densenet121') -> list:
         raise ValueError(f"Unknown architecture for CAM: '{arch}'")
 
 
-# ─── Integrated Gradients ─────────────────────────────────────────────────────
+# --- Integrated Gradients -----------------------------------------------------
 
 def integrated_gradients(
     model,
@@ -149,7 +149,7 @@ def integrated_gradients(
     avg_grad = (grads_t[:-1] + grads_t[1:]).mean(dim=0)   # (1, 3, 224, 224)
     ig_map   = ((inp.cpu() - baseline.cpu()) * avg_grad).squeeze(0)  # (3, 224, 224)
 
-    # Collapse channels → single attribution map in [0, 1]
+    # Collapse channels -> single attribution map in [0, 1]
     attr_map = ig_map.abs().mean(dim=0).numpy()            # (224, 224)
     if attr_map.max() > 0:
         attr_map = attr_map / attr_map.max()
@@ -157,7 +157,7 @@ def integrated_gradients(
     return attr_map
 
 
-# ─── CAM Generation ───────────────────────────────────────────────────────────
+# --- CAM Generation -----------------------------------------------------------
 
 def generate_cam(
     model,
@@ -175,7 +175,7 @@ def generate_cam(
     Args:
         model:        Trained model.
         image_tensor: Input tensor (1, 3, 224, 224).
-        class_idx:    Target class index (0–13).
+        class_idx:    Target class index (0-13).
         device:       Computation device.
         method:       One of 'gradcam', 'gradcam++', 'eigencam', 'ig'.
         arch:         Architecture key for target layer selection.
@@ -203,7 +203,7 @@ def generate_cam(
     return grayscale_cam[0]   # (224, 224)
 
 
-# ─── Visualisation ────────────────────────────────────────────────────────────
+# --- Visualisation ------------------------------------------------------------
 
 def visualize_cam(
     img_path:   str,
@@ -218,7 +218,7 @@ def visualize_cam(
 
     Args:
         img_path:   Path to the original X-ray image.
-        cam_map:    CAM heatmap (224×224), values in [0, 1].
+        cam_map:    CAM heatmap (224x224), values in [0, 1].
         class_name: Name of the predicted class (used in title).
         method:     CAM method name (used in title).
         all_probs:  Optional (14,) array of all class probabilities for
@@ -283,7 +283,7 @@ def run_cam_on_image(
     arch:   str = 'densenet121',
 ) -> None:
     """
-    Full CAM pipeline for a single image: predict → generate CAM → visualise.
+    Full CAM pipeline for a single image: predict -> generate CAM -> visualise.
 
     Args:
         img_path: Path to the X-ray image.
