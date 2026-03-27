@@ -273,7 +273,7 @@ def get_dataloaders(
     # Patient-level split
     train_df, val_df, test_df = patient_level_split(full_df, seed=seed)
     print(
-        f"Patient-level split  →  "
+        f"Patient-level split | "
         f"Train: {len(train_df)} images ({train_df['Patient ID'].nunique()} patients) | "
         f"Val: {len(val_df)} images ({val_df['Patient ID'].nunique()} patients) | "
         f"Test: {len(test_df)} images ({test_df['Patient ID'].nunique()} patients)"
