@@ -27,7 +27,7 @@ from src.dataset import LABELS, ChestXrayDataset
 from src.cam import preprocess_image, generate_cam
 
 
-# ─── Bootstrap CI ─────────────────────────────────────────────────────────────
+# --- Bootstrap CI -------------------------------------------------------------
 
 def _bootstrap_auroc(
     y_true:      np.ndarray,
@@ -66,7 +66,7 @@ def _bootstrap_auroc(
     return aucs.mean(), np.percentile(aucs, alpha * 100), np.percentile(aucs, (1 - alpha) * 100)
 
 
-# ─── Classification Evaluation ────────────────────────────────────────────────
+# --- Classification Evaluation ------------------------------------------------
 
 def evaluate_classification(
     model,
@@ -168,12 +168,12 @@ def evaluate_classification(
     import os
     os.makedirs('outputs', exist_ok=True)
     pd.DataFrame(rows).to_csv(output_csv, index=False)
-    print(f"Results saved → {output_csv}")
+    print(f"Results saved -> {output_csv}")
 
     return results
 
 
-# ─── Localisation Helpers ─────────────────────────────────────────────────────
+# --- Localisation Helpers -----------------------------------------------------
 
 def cam_to_binary_mask(cam_map: np.ndarray, threshold: float = 0.5) -> np.ndarray:
     """Binarise a [0,1] CAM heatmap at the given threshold."""
@@ -182,7 +182,7 @@ def cam_to_binary_mask(cam_map: np.ndarray, threshold: float = 0.5) -> np.ndarra
 
 def bbox_to_mask(x: float, y: float, w: float, h: float, size: int = 224) -> np.ndarray:
     """
-    Convert a radiologist bounding box (NIH coordinates, 1024×1024 space)
+    Convert a radiologist bounding box (NIH coordinates, 1024x1024 space)
     to a binary mask of the target spatial resolution.
 
     Args:
@@ -219,11 +219,11 @@ def pointing_game_hit(cam_map: np.ndarray, x: float, y: float,
 
     The Pointing Game (Zhang et al., 2018) is a binary hit/miss metric that
     asks whether the most activated point of the CAM lies within the annotated
-    region — a stronger localisation criterion than IoU.
+    region -- a stronger localisation criterion than IoU.
 
     Args:
-        cam_map: CAM heatmap (224×224), values in [0, 1].
-        x, y:   Bbox top-left in original 1024×1024 space.
+        cam_map: CAM heatmap (224x224), values in [0, 1].
+        x, y:   Bbox top-left in original 1024x1024 space.
         w, h:   Bbox width and height.
         size:   Spatial resolution of cam_map (default 224).
 
@@ -243,7 +243,7 @@ def pointing_game_hit(cam_map: np.ndarray, x: float, y: float,
     return int(x1 <= peak_x <= x2 and y1 <= peak_y <= y2)
 
 
-# ─── Localisation Evaluation ──────────────────────────────────────────────────
+# --- Localisation Evaluation --------------------------------------------------
 
 def evaluate_localization(
     model,
@@ -343,6 +343,6 @@ def evaluate_localization(
     import os
     os.makedirs('outputs', exist_ok=True)
     results_df.to_csv(output_csv, index=False)
-    print(f"\nFull results saved → {output_csv}")
+    print(f"\nFull results saved -> {output_csv}")
 
     return results_df

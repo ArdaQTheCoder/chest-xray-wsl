@@ -2,16 +2,16 @@
 Training loop for chest X-ray multi-label classification.
 
 Improvements over baseline:
-  1. Asymmetric Loss (ASL) — replaces vanilla BCEWithLogitsLoss to handle
+  1. Asymmetric Loss (ASL) -- replaces vanilla BCEWithLogitsLoss to handle
      the severe class imbalance of the NIH dataset.
-  2. Mixed-Precision Training (AMP) — ~2× speedup on GPUs with negligible
+  2. Mixed-Precision Training (AMP) -- ~2x speedup on GPUs with negligible
      accuracy loss via float16 forward pass and float32 gradient updates.
-  3. Warmup + Cosine Annealing LR — linear warmup for the first few epochs
+  3. Warmup + Cosine Annealing LR -- linear warmup for the first few epochs
      stabilises early training, then cosine decay prevents over-shooting.
-  4. Gradient Clipping — prevents exploding gradients (max norm = 1.0).
-  5. Per-class AUROC logging — prints a breakdown of AUROC per disease at
+  4. Gradient Clipping -- prevents exploding gradients (max norm = 1.0).
+  5. Per-class AUROC logging -- prints a breakdown of AUROC per disease at
      the end of each epoch so per-class progress is visible.
-  6. Training history CSV — saved to outputs/ after every epoch for
+  6. Training history CSV -- saved to outputs/ after every epoch for
      offline plotting and reporting.
 """
 
@@ -29,7 +29,7 @@ from src.losses import AsymmetricLoss
 from src.dataset import LABELS, NUM_CLASSES
 
 
-# ─── LR Schedule ──────────────────────────────────────────────────────────────
+# --- LR Schedule --------------------------------------------------------------
 
 def get_warmup_cosine_scheduler(
     optimizer,
@@ -40,8 +40,8 @@ def get_warmup_cosine_scheduler(
     """
     Linear warmup followed by cosine annealing.
 
-    During warmup: lr scales linearly from 0 → base_lr over warmup_epochs.
-    After warmup:  lr follows cosine decay from base_lr → min_lr_ratio * base_lr.
+    During warmup: lr scales linearly from 0 -> base_lr over warmup_epochs.
+    After warmup:  lr follows cosine decay from base_lr -> min_lr_ratio * base_lr.
 
     Args:
         optimizer:     The optimiser to schedule.
@@ -65,7 +65,7 @@ def get_warmup_cosine_scheduler(
     return LambdaLR(optimizer, lr_lambda)
 
 
-# ─── Training Loop ────────────────────────────────────────────────────────────
+# --- Training Loop ------------------------------------------------------------
 
 def train(
     model,
@@ -121,7 +121,7 @@ def train(
     checkpoint_path = os.path.join(checkpoint_dir, f'best_model_{arch}.pth')
 
     for epoch in range(epochs):
-        # ── Train ──────────────────────────────────────────────────────────────
+        # -- Train --------------------------------------------------------------
         model.train()
         train_loss = 0.0
         epoch_start = time.time()
@@ -153,7 +153,7 @@ def train(
 
         avg_train_loss = train_loss / len(train_loader)
 
-        # ── Validate ───────────────────────────────────────────────────────────
+        # -- Validate -----------------------------------------------------------
         model.eval()
         val_loss = 0.0
         auroc_macro.reset()
@@ -179,7 +179,7 @@ def train(
         elapsed         = time.time() - epoch_start
         current_lr      = optimizer.param_groups[0]['lr']
 
-        # ── Logging ────────────────────────────────────────────────────────────
+        # -- Logging ------------------------------------------------------------
         print(
             f"\nEpoch {epoch+1}/{epochs}  |  "
             f"Train Loss: {avg_train_loss:.4f}  |  "
@@ -194,7 +194,7 @@ def train(
             bar = "#" * int(auc * 20)
             print(f"    {label:<22} {auc:.4f}  {bar}")
 
-        # ── History ────────────────────────────────────────────────────────────
+        # -- History ------------------------------------------------------------
         history['epoch'].append(epoch + 1)
         history['train_loss'].append(avg_train_loss)
         history['val_loss'].append(avg_val_loss)
@@ -207,10 +207,10 @@ def train(
             f'outputs/training_history_{arch}.csv', index=False
         )
 
-        # ── LR Step ────────────────────────────────────────────────────────────
+        # -- LR Step ------------------------------------------------------------
         scheduler.step()
 
-        # ── Checkpoint ─────────────────────────────────────────────────────────
+        # -- Checkpoint ---------------------------------------------------------
         if val_auroc > best_auroc:
             best_auroc = val_auroc
             torch.save(

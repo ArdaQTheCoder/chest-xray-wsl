@@ -29,7 +29,7 @@ for t in thresholds:
         max_samples=200
     )
     mean_iou = results['iou'].mean()
-    print(f"Threshold {t:.1f} → Ortalama IoU: {mean_iou:.4f}\n")
+    print(f"Threshold {t:.1f} -> Ortalama IoU: {mean_iou:.4f}\n")
 
     if mean_iou > best_iou:
         best_iou = mean_iou

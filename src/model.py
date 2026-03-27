@@ -25,7 +25,7 @@ LABELS = [
 ]
 
 
-# ─── CBAM Attention ───────────────────────────────────────────────────────────
+# --- CBAM Attention -----------------------------------------------------------
 
 class ChannelAttention(nn.Module):
     """
@@ -90,17 +90,17 @@ class CBAM(nn.Module):
         return x
 
 
-# ─── Primary Model: DenseNet121 + CBAM ────────────────────────────────────────
+# --- Primary Model: DenseNet121 + CBAM ----------------------------------------
 
 class DenseNetCBAM(nn.Module):
     """
     DenseNet121 with CBAM attention inserted after the final dense block.
 
     Architecture:
-        DenseNet121 features  →  ReLU  →  CBAM  →  GAP  →  Dropout  →  Linear(14)
+        DenseNet121 features  ->  ReLU  ->  CBAM  ->  GAP  ->  Dropout  ->  Linear(14)
 
     The CBAM refines the feature map by attending to the most discriminative
-    channels and spatial regions before global pooling — particularly beneficial
+    channels and spatial regions before global pooling -- particularly beneficial
     for localizing pathological regions in chest X-rays.
 
     Args:
@@ -113,7 +113,7 @@ class DenseNetCBAM(nn.Module):
         weights  = models.DenseNet121_Weights.IMAGENET1K_V1 if pretrained else None
         densenet = models.densenet121(weights=weights)
 
-        self.features   = densenet.features           # (B, 1024, 7, 7) for 224×224
+        self.features   = densenet.features           # (B, 1024, 7, 7) for 224x224
         self.cbam       = CBAM(in_channels=1024, reduction=16)
         self.gap        = nn.AdaptiveAvgPool2d(1)
         self.dropout    = nn.Dropout(p=mc_dropout_p)
@@ -122,7 +122,7 @@ class DenseNetCBAM(nn.Module):
     def forward(self, x: torch.Tensor):
         feat   = self.features(x)              # (B, 1024, 7, 7)
         feat   = torch.relu(feat)              # DenseNet applies ReLU after features
-        feat   = self.cbam(feat)               # (B, 1024, 7, 7)  — attended
+        feat   = self.cbam(feat)               # (B, 1024, 7, 7)  -- attended
         pooled = self.gap(feat).flatten(1)     # (B, 1024)
         pooled = self.dropout(pooled)
         logits = self.classifier(pooled)       # (B, 14)
@@ -135,14 +135,14 @@ class DenseNetCBAM(nn.Module):
                 m.train()
 
 
-# ─── Comparison Model: EfficientNet-B4 ────────────────────────────────────────
+# --- Comparison Model: EfficientNet-B4 ----------------------------------------
 
 class EfficientNetModel(nn.Module):
     """
     EfficientNet-B4 for ablation comparison against DenseNetCBAM.
 
-    EfficientNet-B4 produces 1792-channel feature maps at 7×7 spatial resolution
-    for 224×224 inputs, giving a richer representation than DenseNet121's 1024.
+    EfficientNet-B4 produces 1792-channel feature maps at 7x7 spatial resolution
+    for 224x224 inputs, giving a richer representation than DenseNet121's 1024.
 
     Args:
         pretrained: Load ImageNet-pretrained EfficientNet-B4 weights.
@@ -154,7 +154,7 @@ class EfficientNetModel(nn.Module):
         weights      = models.EfficientNet_B4_Weights.IMAGENET1K_V1 if pretrained else None
         efficientnet = models.efficientnet_b4(weights=weights)
 
-        self.features   = efficientnet.features      # (B, 1792, 7, 7) for 224×224
+        self.features   = efficientnet.features      # (B, 1792, 7, 7) for 224x224
         self.gap        = nn.AdaptiveAvgPool2d(1)
         self.dropout    = nn.Dropout(p=mc_dropout_p)
         self.classifier = nn.Linear(1792, NUM_CLASSES)
@@ -172,7 +172,7 @@ class EfficientNetModel(nn.Module):
                 m.train()
 
 
-# ─── Factory ──────────────────────────────────────────────────────────────────
+# --- Factory ------------------------------------------------------------------
 
 ARCH_REGISTRY = {
     'densenet121':    DenseNetCBAM,
@@ -190,7 +190,7 @@ def get_model(
     Instantiate and move a model to the target device.
 
     Args:
-        arch: Architecture key — 'densenet121' or 'efficientnet_b4'.
+        arch: Architecture key -- 'densenet121' or 'efficientnet_b4'.
         device: PyTorch device string or torch.device.
         pretrained: Use ImageNet-pretrained backbone weights.
         mc_dropout_p: Dropout probability for MC Dropout.

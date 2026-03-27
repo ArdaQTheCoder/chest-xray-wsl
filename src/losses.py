@@ -6,8 +6,8 @@ https://arxiv.org/abs/2009.14119
 
 Designed specifically for large-scale, imbalanced multi-label datasets like NIH
 Chest X-ray. Addresses two core problems:
-  1. Class imbalance — most samples are negative for any given disease.
-  2. Hard negative mining — easy negatives dominate gradients and slow learning.
+  1. Class imbalance -- most samples are negative for any given disease.
+  2. Hard negative mining -- easy negatives dominate gradients and slow learning.
 
 Key ideas:
   - Asymmetric focusing: separate gamma parameters for positives (gamma_pos)

@@ -2,14 +2,14 @@
 Dataset loading and preprocessing for NIH Chest X-ray 14.
 
 Key improvements over baseline:
-  1. Patient-level split — images are split by Patient ID, not randomly by row,
+  1. Patient-level split -- images are split by Patient ID, not randomly by row,
      preventing data leakage where the same patient appears in train and val.
-  2. CLAHE preprocessing — Contrast Limited Adaptive Histogram Equalization
+  2. CLAHE preprocessing -- Contrast Limited Adaptive Histogram Equalization
      enhances local contrast in X-rays, widely used in medical imaging.
-  3. Stronger augmentation — RandomResizedCrop, ColorJitter, GaussianBlur
+  3. Stronger augmentation -- RandomResizedCrop, ColorJitter, GaussianBlur
      for better generalisation.
-  4. Three-way split — train / val / test (70 / 10 / 20 by patient count).
-  5. Class weight computation — per-class positive frequency for optional
+  4. Three-way split -- train / val / test (70 / 10 / 20 by patient count).
+  5. Class weight computation -- per-class positive frequency for optional
      use in loss functions.
 """
 
@@ -34,7 +34,7 @@ LABELS = [
 NUM_CLASSES = len(LABELS)
 
 
-# ─── CLAHE Preprocessing ──────────────────────────────────────────────────────
+# --- CLAHE Preprocessing ------------------------------------------------------
 
 def apply_clahe(image: Image.Image) -> Image.Image:
     """
@@ -65,10 +65,10 @@ class CLAHETransform:
         return apply_clahe(image)
 
     def __repr__(self) -> str:
-        return "CLAHETransform(clipLimit=2.0, tileGridSize=8×8)"
+        return "CLAHETransform(clipLimit=2.0, tileGridSize=8x8)"
 
 
-# ─── Patient-Level Split ──────────────────────────────────────────────────────
+# --- Patient-Level Split ------------------------------------------------------
 
 def patient_level_split(
     df: pd.DataFrame,
@@ -91,7 +91,7 @@ def patient_level_split(
         seed: Random seed for reproducibility.
 
     Returns:
-        (train_df, val_df, test_df) — three DataFrames.
+        (train_df, val_df, test_df) -- three DataFrames.
     """
     patient_ids = df['Patient ID'].unique()
     rng = np.random.default_rng(seed)
@@ -112,7 +112,7 @@ def patient_level_split(
     return train_df, val_df, test_df
 
 
-# ─── Dataset ──────────────────────────────────────────────────────────────────
+# --- Dataset ------------------------------------------------------------------
 
 class ChestXrayDataset(Dataset):
     """
@@ -156,20 +156,20 @@ class ChestXrayDataset(Dataset):
         return image, label_vec, row['Image Index']
 
 
-# ─── Transforms ───────────────────────────────────────────────────────────────
+# --- Transforms ---------------------------------------------------------------
 
 def get_transforms(use_clahe: bool = True):
     """
     Build train and validation transform pipelines.
 
     Train augmentation:
-        CLAHE → RandomResizedCrop(224, scale 0.7–1.0) →
-        RandomHorizontalFlip → RandomRotation(±15°) →
-        ColorJitter(brightness, contrast) →
-        RandomApply(GaussianBlur, p=0.3) →
-        ToTensor → Normalize(ImageNet)
+        CLAHE -> RandomResizedCrop(224, scale 0.7-1.0) ->
+        RandomHorizontalFlip -> RandomRotation(+-15°) ->
+        ColorJitter(brightness, contrast) ->
+        RandomApply(GaussianBlur, p=0.3) ->
+        ToTensor -> Normalize(ImageNet)
 
-    Val/Test: CLAHE → Resize(224) → CenterCrop(224) → ToTensor → Normalize
+    Val/Test: CLAHE -> Resize(224) -> CenterCrop(224) -> ToTensor -> Normalize
 
     Args:
         use_clahe: Apply CLAHE preprocessing (recommended for X-rays).
@@ -206,7 +206,7 @@ def get_transforms(use_clahe: bool = True):
     return train_transform, val_transform
 
 
-# ─── Class Weights ────────────────────────────────────────────────────────────
+# --- Class Weights ------------------------------------------------------------
 
 def compute_class_weights(df: pd.DataFrame) -> torch.Tensor:
     """
@@ -215,7 +215,7 @@ def compute_class_weights(df: pd.DataFrame) -> torch.Tensor:
     Weight_i = N / (2 * pos_i)  (capped at 20 to avoid extreme values).
 
     These can optionally be passed to a weighted BCE loss as a complement
-    to Asymmetric Loss — or used for analysis.
+    to Asymmetric Loss -- or used for analysis.
 
     Args:
         df: Training DataFrame with 'Finding Labels' column.
@@ -232,7 +232,7 @@ def compute_class_weights(df: pd.DataFrame) -> torch.Tensor:
     return weights
 
 
-# ─── DataLoaders ──────────────────────────────────────────────────────────────
+# --- DataLoaders --------------------------------------------------------------
 
 def get_dataloaders(
     csv_path:   str,

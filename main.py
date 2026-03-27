@@ -1,8 +1,8 @@
 """
-Chest X-ray Analysis Pipeline — CLI Entry Point.
+Chest X-ray Analysis Pipeline -- CLI Entry Point.
 
 Modes
-─────
+-----
   train            Train a model from scratch (patient-level split, ASL, AMP).
   evaluate         Classification + localisation evaluation on the test split.
   cam              Generate a CAM visualisation for a single image.
@@ -11,7 +11,7 @@ Modes
   compare          Train both architectures and compare evaluation results.
 
 Examples
-────────
+--------
   # Train the primary model (DenseNet121 + CBAM)
   python main.py train --arch densenet121 --epochs 30
 
@@ -45,7 +45,7 @@ from src.cam import load_model, run_cam_on_image, preprocess_image
 from src.uncertainty import mc_dropout_predict, uncertainty_report, visualize_uncertainty
 
 
-# ─── Defaults ─────────────────────────────────────────────────────────────────
+# --- Defaults -----------------------------------------------------------------
 
 DATA_CSV   = 'data/nih/Data_Entry_2017.csv'
 IMG_DIR    = 'data/nih/images'
@@ -57,11 +57,11 @@ def checkpoint_path(arch: str) -> str:
     return str(Path(CKPT_DIR) / f'best_model_{arch}.pth')
 
 
-# ─── Argument Parser ──────────────────────────────────────────────────────────
+# --- Argument Parser ----------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description='Chest X-ray 14 — Multi-Label Classification & Explainability',
+        description='Chest X-ray 14 -- Multi-Label Classification & Explainability',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -108,7 +108,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-# ─── Mode Handlers ────────────────────────────────────────────────────────────
+# --- Mode Handlers ------------------------------------------------------------
 
 def run_train(args, device: torch.device) -> None:
     from src.dataset import get_dataloaders
@@ -194,7 +194,7 @@ def run_uncertainty(args, device: torch.device) -> None:
     model        = load_model(ckpt, model, device)
     image_tensor, _ = preprocess_image(args.image)
 
-    print(f"Running {args.n_samples} MC Dropout passes …")
+    print(f"Running {args.n_samples} MC Dropout passes ...")
     mean_probs, std_probs = mc_dropout_predict(
         model, image_tensor, device, n_samples=args.n_samples
     )
@@ -228,7 +228,7 @@ def run_threshold_search(args, device: torch.device) -> None:
             output_csv=f'outputs/threshold_{t:.1f}.csv',
         )
         mean_iou = results['iou'].mean()
-        print(f"  Threshold {t:.1f}  →  Mean IoU: {mean_iou:.4f}")
+        print(f"  Threshold {t:.1f}  ->  Mean IoU: {mean_iou:.4f}")
 
         if mean_iou > best_iou:
             best_iou    = mean_iou
@@ -281,7 +281,7 @@ def run_compare(args, device: torch.device) -> None:
     print(pd.DataFrame(summary_rows).to_string(index=False))
 
 
-# ─── Main ─────────────────────────────────────────────────────────────────────
+# --- Main ---------------------------------------------------------------------
 
 def main() -> None:
     parser = build_parser()
