@@ -98,8 +98,8 @@ def uncertainty_report(
     sorted_idx = np.argsort(mean_np)[::-1]
 
     lines = [
-        f"\n{'Disease':<25} {'Prob':>6}  {'±Std':>6}  {'Conf':>6}  {'Status':>10}",
-        "─" * 65,
+        f"\n{'Disease':<25} {'Prob':>6}  {'Std':>6}  {'Conf':>6}  {'Status':>10}",
+        "-" * 65,
     ]
 
     for i in sorted_idx:

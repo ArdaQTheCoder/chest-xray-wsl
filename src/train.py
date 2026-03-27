@@ -191,7 +191,7 @@ def train(
         print("  Per-class AUROC:")
         for i, label in enumerate(LABELS):
             auc = per_class_auroc[i].item()
-            bar = "█" * int(auc * 20)
+            bar = "#" * int(auc * 20)
             print(f"    {label:<22} {auc:.4f}  {bar}")
 
         # ── History ────────────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ def train(
                 },
                 checkpoint_path,
             )
-            print(f"  ✓ Checkpoint saved  (AUROC: {val_auroc:.4f})\n")
+            print(f"  [Saved] Checkpoint  (AUROC: {val_auroc:.4f})\n")
 
     print(f"\nTraining complete. Best Val AUROC: {best_auroc:.4f}")
     print(f"Checkpoint: {checkpoint_path}")
