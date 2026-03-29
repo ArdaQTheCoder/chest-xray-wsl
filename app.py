@@ -158,6 +158,17 @@ try:
 
     image_tensor, pil_image = preprocess_image(tmp_path)
 
+    # -- Ground truth lookup (NIH dataset) -------------------------------------
+    filename = uploaded.name
+    ground_truth = None
+    gt_csv = Path("data/nih/Data_Entry_2017.csv")
+    if gt_csv.exists():
+        gt_df = pd.read_csv(gt_csv, usecols=["Image Index", "Finding Labels",
+                                              "Patient Age", "Patient Gender"])
+        match = gt_df[gt_df["Image Index"] == filename]
+        if not match.empty:
+            ground_truth = match.iloc[0]
+
     # -- Standard prediction ----------------------------------------------------
     model.eval()
     with torch.no_grad():
@@ -195,6 +206,28 @@ try:
     orig_arr   = np.array(pil_image.resize((224, 224))).astype(np.float32) / 255.0
     heatmap_c  = cm.jet(cam_map)[:, :, :3]
     overlay    = (0.55 * orig_arr + 0.45 * heatmap_c).clip(0, 1)
+
+    # -- Ground truth banner ---------------------------------------------------
+    if ground_truth is not None:
+        gt_labels = ground_truth["Finding Labels"]
+        age       = ground_truth["Patient Age"]
+        gender    = ground_truth["Patient Gender"]
+        correct   = top_class_name in gt_labels or (gt_labels == "No Finding" and mean_probs[top_class_idx] < threshold)
+        color     = "green" if correct else "orange"
+        st.markdown(
+            f"""
+            <div style="background:#1a2a1a;border-left:5px solid {color};padding:12px 16px;border-radius:6px;margin-bottom:12px">
+                <b style="font-size:15px">Ground Truth (NIH Dataset)</b><br>
+                <span style="font-size:18px;color:{color}"><b>{gt_labels}</b></span>
+                &nbsp;&nbsp;|&nbsp;&nbsp; Age: {age} &nbsp;|&nbsp; Sex: {gender}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                <span style="color:{color}">{'Model correct' if correct else 'Model incorrect'}</span>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        st.info(f"No ground truth found for **{filename}** — image may not be from the NIH dataset.")
 
     # -------------------------------------------------------------------------
     # Layout: Original | CAM panels | Predictions
@@ -286,11 +319,25 @@ try:
     st.subheader("Full Prediction Table")
     rows = []
     for i, label in enumerate(LABELS):
+        predicted_pos = mean_probs[i] >= threshold
+        if ground_truth is not None:
+            gt_pos = label in ground_truth["Finding Labels"]
+            if predicted_pos and gt_pos:
+                verdict = "TP"
+            elif predicted_pos and not gt_pos:
+                verdict = "FP"
+            elif not predicted_pos and gt_pos:
+                verdict = "FN"
+            else:
+                verdict = "TN"
+        else:
+            verdict = "--"
         rows.append({
             "Disease":      label,
             "Probability":  round(float(mean_probs[i]), 4),
             "Uncertainty":  round(float(std_probs[i]), 4) if show_uncertainty else "--",
-            "Status":       "🔴 POSITIVE" if mean_probs[i] >= threshold else "🟢 negative",
+            "Status":       "POSITIVE" if predicted_pos else "negative",
+            "Ground Truth": verdict,
         })
 
     df = pd.DataFrame(rows).sort_values("Probability", ascending=False).reset_index(drop=True)
