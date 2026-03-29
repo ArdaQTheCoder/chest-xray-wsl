@@ -65,8 +65,11 @@ with st.sidebar:
         ),
     )
 
+    ensemble_mode = st.checkbox("Ensemble Mode (both models)", value=False,
+                                help="Run both DenseNet121+CBAM and EfficientNet-B4. Disagreements are flagged for review.")
     show_uncertainty = st.checkbox("MC Dropout Uncertainty", value=True,
-                                   help="Run N stochastic forward passes to estimate uncertainty.")
+                                   help="Run N stochastic forward passes to estimate uncertainty.",
+                                   disabled=ensemble_mode)
     n_mc_samples = st.slider("MC Dropout samples", 10, 50, 30,
                               disabled=not show_uncertainty)
     threshold = st.slider("Decision threshold", 0.1, 0.9, 0.5, step=0.05,
@@ -107,8 +110,17 @@ def load_cached_model(arch: str, ckpt: str):
 
 model, device, ckpt_status = load_cached_model(arch, checkpoint_path)
 
+# Load second model for ensemble mode
+ckpt2 = "outputs/checkpoints/best_model_efficientnet_b4.pth"
+ckpt1 = "outputs/checkpoints/best_model_densenet121.pth"
+model_dn,  device, status_dn  = load_cached_model("densenet121",    ckpt1)
+model_en,  _,      status_en  = load_cached_model("efficientnet_b4", ckpt2)
+
 with st.sidebar:
     st.info(ckpt_status)
+    if ensemble_mode:
+        st.info(f"DenseNet: {status_dn}")
+        st.info(f"EffNet:   {status_en}")
     if torch.cuda.is_available():
         st.success(f"GPU: {torch.cuda.get_device_name(0)}")
     else:
@@ -175,8 +187,19 @@ try:
         logits, _ = model(image_tensor.to(device))
         probs_det = torch.sigmoid(logits)[0].cpu().numpy()   # deterministic
 
+    # -- Ensemble predictions ---------------------------------------------------
+    if ensemble_mode:
+        model_dn.eval()
+        model_en.eval()
+        with torch.no_grad():
+            logits_dn, _ = model_dn(image_tensor.to(device))
+            logits_en, _ = model_en(image_tensor.to(device))
+        probs_dn = torch.sigmoid(logits_dn)[0].cpu().numpy()
+        probs_en = torch.sigmoid(logits_en)[0].cpu().numpy()
+        mean_probs = (probs_dn + probs_en) / 2.0
+        std_probs  = np.zeros_like(mean_probs)
     # -- MC Dropout uncertainty -------------------------------------------------
-    if show_uncertainty:
+    elif show_uncertainty:
         with st.spinner(f"Running {n_mc_samples} MC Dropout passes ..."):
             mean_probs_t, std_probs_t = mc_dropout_predict(
                 model, image_tensor, device, n_samples=n_mc_samples
@@ -313,6 +336,35 @@ try:
             plt.tight_layout()
             st.pyplot(fig)
             plt.close()
+
+    # --- Ensemble disagreement panel ------------------------------------------
+    if ensemble_mode:
+        st.subheader("Ensemble Agreement")
+        agree_rows = []
+        for i, label in enumerate(LABELS):
+            dn_pos = probs_dn[i] >= threshold
+            en_pos = probs_en[i] >= threshold
+            agree  = dn_pos == en_pos
+            status = "AGREE" if agree else "DISAGREE -- review recommended"
+            color  = "#1a3a1a" if agree else "#3a1a1a"
+            agree_rows.append({
+                "Disease":          label,
+                "DenseNet121+CBAM": f"{probs_dn[i]:.3f} ({'POS' if dn_pos else 'neg'})",
+                "EfficientNet-B4":  f"{probs_en[i]:.3f} ({'POS' if en_pos else 'neg'})",
+                "Ensemble Avg":     f"{mean_probs[i]:.3f}",
+                "Agreement":        status,
+            })
+
+        agree_df = pd.DataFrame(agree_rows).sort_values("Ensemble Avg",
+                    key=lambda x: x.str.extract(r"([\d.]+)")[0].astype(float),
+                    ascending=False).reset_index(drop=True)
+        st.dataframe(agree_df, use_container_width=True)
+
+        n_disagree = sum(1 for r in agree_rows if "DISAGREE" in r["Agreement"])
+        if n_disagree > 0:
+            st.warning(f"{n_disagree} disease(s) have conflicting predictions between models -- radiologist review recommended.")
+        else:
+            st.success("Both models agree on all predictions.")
 
     # --- Full prediction table ------------------------------------------------
 
