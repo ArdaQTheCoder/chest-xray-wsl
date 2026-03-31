@@ -6,7 +6,10 @@
       "Bash(python3 -c \"import timm; print\\(timm.__version__\\)\")",
       "Bash(python3 -c \"import pytorch_grad_cam; print\\(''pytorch_grad_cam: ok''\\)\")",
       "Bash(python3 -c \"import cv2; print\\(''cv2:'', cv2.__version__\\)\")",
-      "Bash(python3 -c \"import streamlit; print\\(''streamlit:'', streamlit.__version__\\)\")"
+      "Bash(python3 -c \"import streamlit; print\\(''streamlit:'', streamlit.__version__\\)\")",
+      "Bash(ls -la /c/Users/ardaa/chest-xray-wsl/.claude*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
